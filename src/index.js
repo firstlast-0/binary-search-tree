@@ -76,7 +76,7 @@ function tree(array) {
                     } else if (ptr.left.left && ptr.left.right) {
                         let ptr2 = ptr.left.right;
                         while (ptr2.left) ptr2 = ptr2.left;
-                        deleteItem(ptr2.data);
+                        deleteItem.call(this, ptr2.data);
                         ptr.left.data = ptr2.data;
                     } else {
                         ptr.left = ptr.left.left ? ptr.left.left : ptr.left.right;
@@ -92,7 +92,7 @@ function tree(array) {
                     } else if (ptr.right.left && ptr.right.right) {
                         let ptr2 = ptr.right.right;
                         while (ptr2.left) ptr2 = ptr2.left;
-                        deleteItem(ptr2.data);
+                        deleteItem.call(this, ptr2.data);
                         ptr.right.data = ptr2.data;
                         return;
                     } else {
@@ -107,7 +107,7 @@ function tree(array) {
                 } else if (ptr.left && ptr.right) {
                     let ptr2 = ptr.right;
                     while (ptr2.left) ptr2 = ptr2.left;
-                    deleteItem(ptr2.data);
+                    deleteItem.call(this, ptr2.data);
                     ptr.data = ptr2.data;
                 } else {
                     this.root = ptr.left ? ptr.left : ptr.right;
@@ -130,7 +130,7 @@ function tree(array) {
         }
     }
 
-    function levelOrder(callback) {        
+    function levelOrder(callback) {
         let ptr = this.root;
         let array = [];
         let queue = [];
@@ -138,33 +138,181 @@ function tree(array) {
         queue.push(ptr);
         while (queue.length !== 0) {
             if (callback) {
-                callback(queue[0])
+                queue[0].data = callback(queue[0]);
             } else {
                 array.push(queue[0].data);
             }
-            
+
             if (queue[0].left) queue.push(queue[0].left);
             if (queue[0].right) queue.push(queue[0].right);
             queue.shift();
         }
-        return array;
-        
+        if (!callback) return array;
     }
 
-    return { root, buildTree, insert, deleteItem, find, levelOrder };
+    function inOrder(callback) {
+        let ptr = this.root;
+        let array = [];
+
+        inO(ptr);
+        function inO(node) {
+            if (!node) return;
+
+            inO(node.left);
+            if (callback) node.data = callback(node);
+            else array.push(node.data);
+            inO(node.right);
+        }
+        if (!callback) return array;
+    }
+
+    function preOrder(callback) {
+        let ptr = this.root;
+        let array = [];
+
+        preO(ptr);
+        function preO(node) {
+            if (!node) return;
+
+            if (callback) node.data = callback(node);
+            else array.push(node.data);
+            preO(node.left);
+            preO(node.right);
+        }
+        if (!callback) return array;
+    }
+
+    function postOrder(callback) {
+        let ptr = this.root;
+        let array = [];
+
+        postO(ptr);
+        function postO(node) {
+            if (!node) return;
+
+            postO(node.left);
+            postO(node.right);
+            if (callback) node.data = callback(node);
+            else array.push(node.data);
+        }
+        if (!callback) return array;
+    }
+
+    function height(value) {
+        let ptr = this.root;
+        while (ptr) {
+            if (value < ptr.data) {
+                ptr = ptr.left;
+            } else if (value > ptr.data) {
+                ptr = ptr.right;
+            } else {
+                let maxDepth = 0;
+                let nodeDepth = depth.call(this, ptr.data);
+                let queue = [];
+                queue.push(ptr);
+
+                while (queue.length !== 0) {
+                    if (depth.call(this, queue[0].data) > maxDepth) maxDepth = depth.call(this, queue[0].data);
+
+                    if (queue[0].left) queue.push(queue[0].left);
+                    if (queue[0].right) queue.push(queue[0].right);
+                    queue.shift();
+                }
+                return maxDepth - nodeDepth;
+            }
+        }
+        return 'Value not in tree';
+    }
+
+    function depth(value) {
+        let ptr = this.root;
+        let depth = 0;
+        while (ptr) {
+            if (value < ptr.data) {
+                ptr = ptr.left;
+                depth++;
+            } else if (value > ptr.data) {
+                ptr = ptr.right;
+                depth++;
+            } else {
+                return depth;
+            }
+        }
+        return 'Value not in tree';
+    }
+
+    function isBalanced() {
+        let ptr = this.root;
+        let queue = [];
+        queue.push(ptr);
+
+        while (queue.length !== 0) {
+            let leftH = queue[0].left ? height.call(this, queue[0].left.data) + 1 : 0;
+            let rightH = queue[0].right ? height.call(this, queue[0].right.data) + 1 : 0;
+            let heightDiff = leftH - rightH;
+            if (heightDiff > 1 || heightDiff < -1) {
+                return false;
+            }
+
+            if (queue[0].left) queue.push(queue[0].left);
+            if (queue[0].right) queue.push(queue[0].right);
+            queue.shift();
+        }
+        return true;
+    }
+
+    function rebalance() {
+        let array = levelOrder();
+        array.sort((a, b) => a - b);
+        this.root = buildTree(array);
+    }
+
+    return { root, buildTree, insert, deleteItem, find, levelOrder, inOrder, preOrder, postOrder, height, depth, isBalanced, rebalance };
 }
 
-let bst = tree([1]);
+// let bst = tree([1, 2, 3, 4, 5, 6, 7]);
 // [1, 2, 3, 4, 5, 6, 7];
-// bst.insert(1000);
+// bst.insert(8);
+// bst.insert(9);
+// bst.insert(-1);
+// bst.insert(-2);
 // bst.deleteItem(2);
 // bst.deleteItem(6);
 // console.log(bst.root)
-prettyPrint(bst.root);
-console.log(bst.levelOrder());
+// prettyPrint(bst.root);
+// console.log(bst.rebalance());
+// prettyPrint(bst.root);
 
 // let bst = tree([1, 7, 4, 23, 8, 9, 4, 3, 5, 7, 9, 67, 6345, 324]);
 
-function sum() {
-    
+function timesTwo(node) {
+    return node.data * 2;
 }
+
+function randomInt() {
+    let array = [];
+    while (array.length !== 10) array.push(Math.trunc(Math.random() * 100));
+    return array;
+}
+
+let bst = tree([1, 2, 3, 4, 5, 6, 7]);
+prettyPrint(bst.root);
+console.log(bst.isBalanced());
+console.log(bst.levelOrder());
+console.log(bst.preOrder());
+console.log(bst.inOrder());
+console.log(bst.postOrder());
+bst.insert(101);
+bst.insert(105);
+bst.insert(150);
+prettyPrint(bst.root);
+console.log(bst.isBalanced());
+bst.rebalance();
+prettyPrint(bst.root);
+console.log(bst.isBalanced());
+console.log(bst.levelOrder());
+console.log(bst.preOrder());
+console.log(bst.inOrder());
+console.log(bst.postOrder());
+bst.deleteItem(2);
+prettyPrint(bst.root);
